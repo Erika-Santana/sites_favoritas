@@ -25,41 +25,33 @@ class MainActivity : AppCompatActivity(), SiteItemClickListener {
         configListeners()
         configRecyclerView()
     }
-    // Método da interface SiteItemClickListener que é
-    // acionado no adapter do RecyclerView.
-    // Método utiliza uma Intent implicita para abrir
-    // o navegador com o endereço passado como argumento
+
     override fun clickSiteItem(position: Int) {
         val site = datasource[position]
         val mIntent = Intent(Intent.ACTION_VIEW)
         mIntent.setData(Uri.parse("http://" + site.url))
         startActivity(mIntent)
     }
-    // Método da interface SiteItemClickListener que é
-    // acionado no adapter do RecyclerView quando o
-    // usuário clicar sobre a imagem de coração.
+
     override fun clickHeartSiteItem(position: Int) {
         val site = datasource[position]
         site.favorito = !site.favorito
         notifyAdapter()
     }
-    // Configuração do listener do floatActionButton.
+
     private fun configListeners() {
         binding.buttonAdd.setOnClickListener { handleAddSite() }
     }
-    // Configuração do RecyclerView.
+
     private fun configRecyclerView() {
-        // Define o adapter passando como argumento a fonte de dados
-        // e o objeto que implementa a interface SiteItemClickListener
-        // no caso a própria MainActivity.
+
         val adapter = SiteAdapter(this, datasource, this)
         val layoutManager: RecyclerView.LayoutManager =
             LinearLayoutManager(this)
         binding.recyclerviewSites.layoutManager = layoutManager
         binding.recyclerviewSites.adapter = adapter
     }
-    // Método é responsável por notificar o adapter informando
-    // que houve alteração em algum dos dados da fonte.
+
     private fun notifyAdapter() {
         val adapter = binding.recyclerviewSites.adapter
         adapter?.notifyDataSetChanged()
@@ -72,8 +64,7 @@ class MainActivity : AppCompatActivity(), SiteItemClickListener {
             .setTitle(R.string.novo_site)
             .setPositiveButton(R.string.salvar,
                 DialogInterface.OnClickListener { dialog, which ->
-                    // Salvar um site é incluir um objeto na lista,
-                    // e notificar o adapter que existe atualização.
+
                     datasource.add(
                         Site(
                             bindingDialog.edittextApelido.text.toString(),
