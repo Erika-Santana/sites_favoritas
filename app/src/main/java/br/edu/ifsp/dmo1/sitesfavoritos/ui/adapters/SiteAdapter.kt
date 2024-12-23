@@ -3,18 +3,19 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import br.edu.ifsp.dmo1.sitesfavoritos.R
 import br.edu.ifsp.dmo1.sitesfavoritos.data.model.Site
 import br.edu.ifsp.dmo1.sitesfavoritos.databinding.ItemViewBinding
 import br.edu.ifsp.dmo1.sitesfavoritos.ui.listeners.SiteItemClickListener
 
-class SiteAdapter(val context: Context, val dataset: List<Site>, val listener:
+class SiteAdapter(val context: Context, var dataset: List<Site>, val listener:
 SiteItemClickListener
 ) :
     RecyclerView.Adapter<SiteAdapter.ViewHolder>() {
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        //Atributo do objeto
+
         val binding: ItemViewBinding = ItemViewBinding.bind(view)
 
     }
@@ -25,9 +26,9 @@ SiteItemClickListener
         return ViewHolder(view)
     }
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        // Referencia do site a ser exibido
+
         val item = dataset[position]
-        // Define dados do site na interface (item)
+
         holder.binding.textviewApelido.setText(item.apelido)
         holder.binding.textviewUrl.setText(item.url)
         if(item.favorito){
@@ -36,15 +37,24 @@ SiteItemClickListener
 
             holder.binding.imgHeart.setColorFilter(context.getColor(R.color.gray))
         }
-        // Clique no icone de coração
 
         holder.binding.imgHeart.setOnClickListener{listener.clickHeartSiteItem(position
         )}
-        // Clique no item da lista
+
 
         holder.binding.layoutItem.setOnClickListener{listener.clickSiteItem(position)}
+
+        holder.binding.imgDelete.setOnClickListener{
+            listener.clickDeleteSiteItem(position)
+        }
     }
     override fun getItemCount(): Int {
         return dataset.size
     }
+
+    fun updateData(newDataset: List<Site>) {
+        dataset = newDataset
+        notifyDataSetChanged()
+    }
+
 }

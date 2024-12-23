@@ -6,6 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import br.edu.ifsp.dmo1.sitesfavoritos.R
@@ -16,27 +18,47 @@ import br.edu.ifsp.dmo1.sitesfavoritos.ui.adapters.SiteAdapter
 import br.edu.ifsp.dmo1.sitesfavoritos.ui.listeners.SiteItemClickListener
 
 class MainActivity : AppCompatActivity(), SiteItemClickListener {
+
+    private lateinit var viewModelActivity: ViewModelActivity
     private lateinit var binding: ActivityMainBinding
-    private var datasource = ArrayList<Site>()
+    private lateinit var adapter: SiteAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configListeners()
         configRecyclerView()
+
+
+        viewModelActivity = ViewModelProvider(this).get(ViewModelActivity::class.java)
+
+        viewModelActivity.sites.observe(this, Observer { sites ->
+            adapter.updateData(sites)
+        })
     }
 
     override fun clickSiteItem(position: Int) {
-        val site = datasource[position]
+        val site = viewModelActivity.getSiteAtPosition(position)
         val mIntent = Intent(Intent.ACTION_VIEW)
-        mIntent.setData(Uri.parse("http://" + site.url))
+        mIntent.setData(Uri.parse("http://" + site?.url))
         startActivity(mIntent)
     }
 
     override fun clickHeartSiteItem(position: Int) {
-        val site = datasource[position]
-        site.favorito = !site.favorito
-        notifyAdapter()
+        val site = viewModelActivity.getSiteAtPosition(position)
+        if (site != null) {
+            site.favorito = !site.favorito
+            adapter.notifyItemChanged(position)
+        }
+    }
+
+    override fun clickDeleteSiteItem(position: Int) {
+        val site = viewModelActivity.getSiteAtPosition(position)
+        if (site != null) {
+            viewModelActivity.deleteSite(site)
+            adapter.notifyItemRemoved(position)
+        }
     }
 
     private fun configListeners() {
@@ -44,41 +66,36 @@ class MainActivity : AppCompatActivity(), SiteItemClickListener {
     }
 
     private fun configRecyclerView() {
-
-        val adapter = SiteAdapter(this, datasource, this)
-        val layoutManager: RecyclerView.LayoutManager =
-            LinearLayoutManager(this)
+        val layoutManager: RecyclerView.LayoutManager = LinearLayoutManager(this)
         binding.recyclerviewSites.layoutManager = layoutManager
+        adapter = SiteAdapter(this, emptyList(), this)
         binding.recyclerviewSites.adapter = adapter
     }
 
     private fun notifyAdapter() {
-        val adapter = binding.recyclerviewSites.adapter
-        adapter?.notifyDataSetChanged()
+        adapter.notifyDataSetChanged()
     }
-    private fun handleAddSite() {val tela = layoutInflater.inflate(R.layout.sites_dialog, null)
+
+    private fun handleAddSite() {
+        val tela = layoutInflater.inflate(R.layout.sites_dialog, null)
         val bindingDialog: SitesDialogBinding = SitesDialogBinding.bind(tela)
-        // Configuração do AlertDialog
+
         val builder = AlertDialog.Builder(this)
             .setView(tela)
             .setTitle(R.string.novo_site)
-            .setPositiveButton(R.string.salvar,
-                DialogInterface.OnClickListener { dialog, which ->
-
-                    datasource.add(
-                        Site(
-                            bindingDialog.edittextApelido.text.toString(),
-                            bindingDialog.edittextUrl.text.toString()
-                        )
+            .setPositiveButton(R.string.salvar) { dialog, which ->
+                viewModelActivity.adicionarNovoSite(
+                    Site(
+                        bindingDialog.edittextApelido.text.toString(),
+                        bindingDialog.edittextUrl.text.toString()
                     )
-                    notifyAdapter()
-                    dialog.dismiss()
-                })
-            .setNegativeButton(R.string.cancelar,
-                DialogInterface.OnClickListener { dialog, which ->
-                    dialog.dismiss()
-                })
-        val dialog = builder.create()
-        dialog.show()
+                )
+                dialog.dismiss()
+            }
+            .setNegativeButton(R.string.cancelar) { dialog, which ->
+                dialog.dismiss()
+            }
+
+        builder.create().show()
     }
 }
